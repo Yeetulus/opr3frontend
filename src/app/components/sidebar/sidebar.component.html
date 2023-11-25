@@ -1,0 +1,23 @@
+<div>
+  <button mat-button (click)="navigateToAddCategory()">
+    <mat-icon>add</mat-icon>
+    <span>New Category</span>
+  </button>
+  <br>
+  <button mat-button (click)="navigateToAddTask()">
+    <mat-icon>add</mat-icon>
+    <span>New Task</span>
+  </button>
+  <br>
+  <mat-slide-toggle
+    class="slider-margin"
+    color="primary"
+    [(ngModel)]="showCompleted"
+    (change)="onSlideToggleChange()">
+    Show completed
+  </mat-slide-toggle>
+  <hr>
+  <div *ngFor="let category of categoryService.getCategories() | async">
+    <app-category [category]="category"></app-category>
+  </div>
+</div>

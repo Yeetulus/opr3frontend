@@ -1,0 +1,26 @@
+<ng-container>
+  <div>
+    <mat-toolbar color="primary">
+      <button class="app-logo-button" mat-button (click)="redirectToBoard()">TO DO Application</button>
+      <span class="example-spacer"></span>
+      <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Example icon-button with a menu">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #menu="matMenu">
+        <button mat-menu-item>
+          <mat-icon>clear</mat-icon>
+          <span (click)="logout()">Logout</span>
+        </button>
+      </mat-menu>
+    </mat-toolbar>
+  </div>
+
+  <mat-drawer-container class="example-container">
+    <mat-drawer class="sidebar" mode="side" opened>
+      <app-sidebar></app-sidebar>
+    </mat-drawer>
+    <mat-drawer-content class="main-content">
+      <router-outlet></router-outlet>
+    </mat-drawer-content>
+  </mat-drawer-container>
+</ng-container>

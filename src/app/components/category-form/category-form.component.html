@@ -1,0 +1,18 @@
+<form [formGroup]="categoryForm" (ngSubmit)="submitForm()">
+  <mat-form-field>
+    <label for="name">Name:</label>
+    <input matInput type="text" id="name" formControlName="name" required>
+  </mat-form-field>
+  <br>
+  <mat-form-field>
+    <label for="description">Description:</label>
+    <textarea matInput id="description" formControlName="description"></textarea>
+  </mat-form-field>
+  <br>
+  <mat-form-field class="form-field">
+    <mat-label>Color</mat-label>
+    <input matInput type="color" formControlName="color" required placeholder="Color">
+  </mat-form-field>
+  <br>
+  <button mat-raised-button color="primary" type="submit" [disabled]="!categoryForm.valid">Create Category</button>
+</form>
