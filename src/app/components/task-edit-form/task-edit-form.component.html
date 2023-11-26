@@ -1,0 +1,69 @@
+<form [formGroup]="taskForm" (ngSubmit)="submitForm()">
+  <mat-form-field>
+    <label for="name">Name:</label>
+    <input matInput type="text" id="name" formControlName="name" required>
+  </mat-form-field>
+  <br>
+  <mat-form-field>
+    <label for="description">Description:</label>
+    <textarea matInput id="description" formControlName="description"></textarea>
+  </mat-form-field>
+  <br>
+  <mat-form-field>
+    <label>Category:</label>
+    <mat-select formControlName="category">
+      <mat-option *ngFor="let category of categories" [value]="category">
+        {{ category.name }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <br>
+  <mat-slide-toggle class="toggle-spacing" color="primary" formControlName="showDateDiv">Date</mat-slide-toggle>
+  <br>
+  <ng-container *ngIf="taskForm.get('showDateDiv')?.value">
+    <mat-form-field>
+      <label for="datepicker">Date:</label>
+      <input matInput [matDatepicker]="picker" placeholder="Choose a date" formControlName="selectedDate" id="datepicker">
+      <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
+    </mat-form-field>
+    <br>
+    <mat-slide-toggle class="toggle-spacing" color="primary" formControlName="showTimesDiv">Times</mat-slide-toggle>
+    <br>
+
+    <ng-container *ngIf="taskForm.get('showTimesDiv')?.value">
+      <mat-form-field>
+        <label for="startTime">Start:</label>
+        <input matInput type="time" id="startTime" formControlName="startTime" required>
+      </mat-form-field>
+
+      <mat-form-field>
+        <label for="endTime">End:</label>
+        <input matInput type="time" id="endTime" formControlName="endTime" required>
+      </mat-form-field>
+    </ng-container>
+  </ng-container>
+  <br>
+  <mat-slide-toggle class="toggle-spacing" color="primary" formControlName="showSubtasksDiv">Subtasks</mat-slide-toggle>
+  <ng-container *ngIf="taskForm.get('showSubtasksDiv')?.value">
+    <div formArrayName="subtasks">
+      <div *ngFor="let subtask of subtasks.controls; let i = index" [formGroupName]="i">
+        <mat-form-field class="subtask-field">
+          <label [for]="'subtaskName' + i">Name:</label>
+          <input matInput type="text" [id]="'subtaskName' + i" formControlName="name" required>
+        </mat-form-field>
+        <mat-form-field class="subtask-field">
+          <label [for]="'subtaskDescription' + i">Description:</label>
+          <textarea matInput [id]="'subtaskDescription' + i" formControlName="description" class="no-resize"></textarea>
+        </mat-form-field>
+        <button mat-button type="button" (click)="removeSubtask(i)" class="remove-button">Remove</button>
+      </div>
+
+    </div>
+
+    <button mat-raised-button type="button" (click)="addNewSubtask()">Add Subtask</button>
+  </ng-container>
+
+  <br>
+  <button mat-raised-button class="button-space" color="primary" type="submit" [disabled]="!taskForm.valid">Confirm changes</button>
+</form>

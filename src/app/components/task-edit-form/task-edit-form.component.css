@@ -1,0 +1,32 @@
+.toggle-spacing{
+
+  margin-left: 3px;
+  margin-top: 10px;
+  margin-bottom: 15px;
+  font-size: larger;
+}
+
+.button-space{
+  margin-top: 20px;
+}
+
+
+
+.subtask-container {
+  display: flex;
+  align-items: flex-start;
+}
+
+.subtask-field {
+  flex: 1;
+  margin-right: 10px;
+  height: 100px;
+}
+
+.no-resize {
+  resize: none;
+}
+
+.remove-button {
+  margin-left: 10px;
+}
