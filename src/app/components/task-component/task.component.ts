@@ -1,10 +1,27 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {Category} from "../category-component/category.component";
 import {CategoryService} from "../../services/category-service/category.service";
+import {Router} from "@angular/router";
 
 export enum TaskType {
   Simple = 'SIMPLE',
   Complex = 'COMPLEX',
+}
+
+
+export function stringify(obj:any) {
+  let cache:any[] = [];
+  let str = JSON.stringify(obj, function(key, value) {
+    if (typeof value === "object" && value !== null) {
+      if (cache.indexOf(value) !== -1) {
+        return;
+      }
+      cache.push(value);
+    }
+    return value;
+  });
+  cache = [];
+  return str;
 }
 
 export class Task{
@@ -41,6 +58,17 @@ export class Task{
     this.parentTask = parentTask;
     this.subtasks = subtasks;
   }
+
+  static fromJSON(json: any): Task {
+    const reviver = (key: string, value: any) => {
+      if (key === 'fromDate' || key === 'toDate') {
+        return value ? new Date(value) : undefined;
+      }
+      return value;
+    };
+
+    return Object.assign(new Task(0, '', TaskType.Simple, false, new Category(0, '', '', '', [])), JSON.parse(json, reviver));
+  }
 }
 
 @Component({
@@ -48,14 +76,12 @@ export class Task{
   templateUrl: './task.component.html',
   styleUrls: ['./task.component.css'],
 })
-export class TaskComponent implements OnInit{
+export class TaskComponent {
 
   @Input() task!: Task;
+  hoveringDelete : boolean = false;
 
-  constructor(private categoryService: CategoryService){}
-  ngOnInit(): void {
-  }
-
+  constructor(private categoryService: CategoryService, public router: Router){}
 
   onTaskClick(task: Task) {
     task.completed = !task.completed;
@@ -76,5 +102,12 @@ export class TaskComponent implements OnInit{
       }
     }
     this.categoryService.updateTask(this.task);
+  }
+
+  editTask() {
+    this.router.navigate(["main/edit-task", {task: stringify(this.task)}])
+  }
+  removeTask() {
+    this.categoryService.deleteTask(this.task);
   }
 }

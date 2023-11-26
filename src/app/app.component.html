@@ -1,4 +1,9 @@
+<div id="app-container">
 
-<div>
   <router-outlet></router-outlet>
+  <div id="notifications-container">
+    <button *ngFor="let notification of notifications; let i = index" class="notification" [ngClass]="notification.type" (click)="clearNotification(i)">
+      {{ notification.message }}
+    </button>
+  </div>
 </div>

@@ -1,6 +1,6 @@
-<mat-card>
-  <mat-card-title>Registration</mat-card-title>
-  <mat-card-content>
+<div class="space">
+  <h1>Registration</h1>
+  <div>
     <form>
       <mat-form-field>
         <input matInput placeholder="First Name" [(ngModel)]="firstName" name="firstName" required>
@@ -18,7 +18,8 @@
         <input matInput type="password" placeholder="Password" [(ngModel)]="password" name="password" required>
       </mat-form-field>
       <br>
-      <button mat-raised-button color="primary" (click)="register()">Register</button>
+      <a routerLink="/login">Already registered? Log in!</a><br>
+      <button class="button-space" mat-raised-button color="primary" (click)="register()">Register</button>
     </form>
-  </mat-card-content>
-</mat-card>
+  </div>
+</div>

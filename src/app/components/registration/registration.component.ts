@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import {AuthResponse, AuthService, RegistrationRequest} from "../../services/auth-service/auth.service";
 import {Router} from "@angular/router";
+import {NotificationService, NotificationType} from "../../services/notification-service/notification.service";
 
 @Component({
   selector: 'app-registration',
@@ -14,7 +15,7 @@ export class RegistrationComponent {
   email: string = '';
   password: string = '';
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router, private notificationsService:NotificationService) {}
 
   register(): void {
     const request: RegistrationRequest = {
@@ -27,9 +28,11 @@ export class RegistrationComponent {
     this.authService.registerUser(request).subscribe(
       (response) => {
         this.authenticated(response);
+        this.notificationsService.showNotification('Registration successful!', NotificationType.Success);
       },
       (error) => {
         console.error('Registration failed', error);
+        this.notificationsService.showNotification('Registration failed. Please try again.', NotificationType.Error);
       }
     );
   }

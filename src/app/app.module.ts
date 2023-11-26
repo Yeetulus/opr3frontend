@@ -27,6 +27,10 @@ import { CategoryFormComponent } from './components/category-form/category-form.
 import {MatSlideToggleModule} from "@angular/material/slide-toggle";
 import {ColorPickerModule} from "ngx-color-picker";
 import { TaskFormComponent } from './components/task-form/task-form.component';
+import {MatSelectModule} from "@angular/material/select";
+import {MatDatepickerModule} from "@angular/material/datepicker";
+import {MatNativeDateModule} from "@angular/material/core";
+import { TaskEditFormComponent } from './components/task-edit-form/task-edit-form.component';
 
 @NgModule({
   declarations: [
@@ -40,6 +44,7 @@ import { TaskFormComponent } from './components/task-form/task-form.component';
     SidebarComponent,
     CategoryFormComponent,
     TaskFormComponent,
+    TaskEditFormComponent,
   ],
   imports: [
     BrowserModule,
@@ -59,7 +64,10 @@ import { TaskFormComponent } from './components/task-form/task-form.component';
     MatTooltipModule,
     ReactiveFormsModule,
     MatSlideToggleModule,
-    ColorPickerModule
+    ColorPickerModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    MatNativeDateModule
   ],
   providers: [],
   bootstrap: [AppComponent]

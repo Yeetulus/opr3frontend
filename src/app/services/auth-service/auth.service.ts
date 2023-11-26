@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {catchError, map, Observable, of} from "rxjs";
 import {Router} from "@angular/router";
+import {CategoryService} from "../category-service/category.service";
 
 
 export interface AuthResponse {
@@ -28,17 +29,19 @@ export interface RegistrationRequest {
 export class AuthService {
   private baseUrl = 'http://localhost:8080/api/auth';
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router, public categoryService: CategoryService) {}
 
   registerUser(request: RegistrationRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.baseUrl}/register`, request);
   }
 
   login(request: AuthRequest): Observable<AuthResponse> {
+    this.categoryService.cleanup();
     return this.http.post<AuthResponse>(`${this.baseUrl}/authenticate`, request);
   }
 
   logout(): void {
+    this.categoryService.cleanup();
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
 

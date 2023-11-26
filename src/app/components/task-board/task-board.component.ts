@@ -1,8 +1,7 @@
-import { Component, OnInit } from '@angular/core';
-import {Category} from "../category-component/category.component";
+import {Component, OnInit} from '@angular/core';
 import {CategoryService} from "../../services/category-service/category.service";
-import {map} from "rxjs";
 import { Task } from '../task-component/task.component';
+import {Observable} from "rxjs";
 
 @Component({
   selector: 'app-task-board',
@@ -10,9 +9,11 @@ import { Task } from '../task-component/task.component';
   styleUrls: ['./task-board.component.css'],
 })
 export class TaskBoardComponent implements OnInit {
-
+  tasks : Observable<Task[]> = new Observable<Task[]>();
   constructor(public categoryService: CategoryService) {}
 
   ngOnInit(): void {
+    this.tasks = this.categoryService.getDisplayedTasks();
+    this.tasks.subscribe();
   }
 }

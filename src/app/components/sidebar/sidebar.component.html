@@ -17,7 +17,7 @@
     Show completed
   </mat-slide-toggle>
   <hr>
-  <div *ngFor="let category of categoryService.getCategories() | async">
+  <div *ngFor="let category of categories | async">
     <app-category [category]="category"></app-category>
   </div>
 </div>

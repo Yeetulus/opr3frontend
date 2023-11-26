@@ -1,10 +1,8 @@
-.task-button{
+.task-button {
   padding: 10px;
   margin-top: 8px;
   width: 100%;
-  display: grid;
-  justify-content: flex-start;
-  align-items: center;
+  display: block;
 }
 
 .subtask-button{
@@ -14,7 +12,22 @@
   width: 95%;
   display: grid;
   justify-content: flex-start;
-  align-items: center;
+  align-items: flex-start;
+}
+
+.content{
+  float: left;
+}
+
+.icons{
+  float: right;
+  margin-right: 0;
+  margin-left: auto;
+}
+
+.task-icon{
+  padding-left: 8px;
+  padding-right: 8px;
 }
 
 .spacer{

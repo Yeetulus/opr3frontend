@@ -1,17 +1,26 @@
 <ng-container>
-  <button mat-button class="task-button" (click)="onTaskClick(task)" [style.background-color]="task.completed ? 'green' : task.category.color" matTooltip="{{ task.description }}">
-    <span>{{ task.name }}</span>
+  <button mat-button class="task-button" (click)="onTaskClick(task)" [style.background-color]="hoveringDelete? 'red' : (task.completed ? 'green' : task.category.color)"
+          matTooltip="{{ task.description }}">
+    <span class="content">
+      <span>{{ task.name }}</span>
     <span class="spacer"></span>
     <span>
       <ng-container *ngIf="task.fromDate || task.toDate">
-        <span *ngIf="task.fromDate && !task.toDate">{{ task.fromDate | date: 'dd.MM.yyyy HH:mm' }}</span>
+        <span *ngIf="task.fromDate && !task.toDate">{{ task.fromDate | date: 'dd.MM.yyyy' }}</span>
         <span *ngIf="task.fromDate && task.toDate">{{ task.fromDate | date: 'dd.MM.yyyy HH:mm' }} - {{ task.toDate | date: 'HH:mm' }}</span>
       </ng-container>
+    </span>
+    </span>
+    <span class="icons">
+      <mat-icon class="task-icon" inline="true" (click)="
+  $event.preventDefault(); $event.stopPropagation(); editTask();">edit</mat-icon>
+      <mat-icon class="task-icon" inline="true" (mouseenter)="hoveringDelete = true" (mouseleave)="hoveringDelete = false" (click)="
+  $event.preventDefault(); $event.stopPropagation(); removeTask();">cancel</mat-icon>
     </span>
   </button>
   <ng-container *ngIf="task.subtasks && task.subtasks.length > 0">
     <ng-container *ngFor="let subtask of task.subtasks">
-      <button mat-button class="subtask-button" (click)="onTaskClick(subtask)" [style.background-color]="subtask.completed ? 'green' : task.category.color" matTooltip="{{ subtask.description }}">
+      <button mat-button class="subtask-button" (click)="onTaskClick(subtask)" [style.background-color]="hoveringDelete? 'red' : (subtask.completed ? 'green' : task.category.color)" matTooltip="{{ subtask.description }}">
         <span>{{ subtask.name }}</span>
         <span class="spacer"></span>
         <span>
