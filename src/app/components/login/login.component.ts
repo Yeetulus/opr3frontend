@@ -12,20 +12,22 @@ export class LoginComponent {
 
   username: string = '';
   password: string = '';
-  constructor(private authService: AuthService, private router: Router, private notificationService: NotificationService) {}
+  constructor(private authService: AuthService,
+              private router: Router,
+              private notificationService: NotificationService) {}
 
   login(): void {
     const request: AuthRequest = { email: this.username, password: this.password };
-    this.authService.login(request).subscribe(
-      (response) => {
+    this.authService.login(request).subscribe({
+      next: (response) => {
         this.authenticated(response);
         this.notificationService.showNotification('Login successful!', NotificationType.Success);
       },
-      (error) => {
+      error: (error) => {
         console.error('Login failed', error);
         this.notificationService.showNotification('Login failed. Please check your credentials and try again.', NotificationType.Error);
       }
-    );
+    });
   }
 
   authenticated(response: AuthResponse) {
@@ -36,13 +38,13 @@ export class LoginComponent {
 
   register(): void {
     const request: RegistrationRequest = { firstName: '', lastName: '', email: this.username, password: this.password };
-    this.authService.registerUser(request).subscribe(
-      (response) => {
+    this.authService.registerUser(request).subscribe({
+      next: (response) => {
         this.authenticated(response);
       },
-      (error) => {
+      error: (error) => {
         console.error('Registration failed', error);
       }
-    );
+    });
   }
 }

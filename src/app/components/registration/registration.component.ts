@@ -25,16 +25,16 @@ export class RegistrationComponent {
       password: this.password
     };
 
-    this.authService.registerUser(request).subscribe(
-      (response) => {
+    this.authService.registerUser(request).subscribe({
+      next: (response) => {
         this.authenticated(response);
         this.notificationsService.showNotification('Registration successful!', NotificationType.Success);
       },
-      (error) => {
+      error: (error) => {
         console.error('Registration failed', error);
         this.notificationsService.showNotification('Registration failed. Please try again.', NotificationType.Error);
       }
-    );
+    });
   }
 
   authenticated(response: AuthResponse) {

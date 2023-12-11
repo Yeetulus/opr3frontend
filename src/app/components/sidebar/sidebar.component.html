@@ -17,7 +17,22 @@
     Show completed
   </mat-slide-toggle>
   <hr>
-  <div *ngFor="let category of categories | async">
+  <div *ngFor="let category of categories">
     <app-category [category]="category"></app-category>
   </div>
+  <hr>
+  <mat-form-field>
+    <mat-label>Category to Delete</mat-label>
+    <mat-select [(ngModel)]="selectedCategoryId">
+      <mat-option *ngFor="let category of categories" [value]="category.id" [ngStyle]="{ 'background-color': category.color}">
+        {{ category.name }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <button mat-raised-button color="warn" (click)="deleteSelectedCategory()" [disabled]="!selectedCategoryId">
+    Delete Category
+  </button>
+
+
 </div>

@@ -1,9 +1,8 @@
-import {Component} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {CategoryService} from "../../services/category-service/category.service";
 import {AbstractControl, FormArray, FormBuilder, FormGroup, ValidatorFn, Validators} from "@angular/forms";
-import {Router} from "@angular/router";
 import {Category} from "../category-component/category.component";
-import {Task, TaskType} from '../task-component/task.component';
+import {Task} from '../task-component/task.component';
 
 
 
@@ -11,7 +10,6 @@ export function buildTask(taskForm : FormGroup): Task {
   const task: Task = {
     id: -1,
     name: taskForm.get('name')?.value,
-    taskType:  TaskType.Simple,
     completed: false,
     category: taskForm.get('category')?.value,
     description: taskForm.get('description')?.value,
@@ -37,24 +35,24 @@ export function buildTask(taskForm : FormGroup): Task {
   return task;
 }
 
-export function combineDateAndTime(date: string, time: string): Date {
-  const combinedDateTime = `${date}T${time}`;
-  return new Date(combinedDateTime);
+export function combineDateAndTime(date: Date, time: string): Date {
+  const combinedDateTime = new Date(date);
+  combinedDateTime.setHours(parseInt(time.split(':')[0], 10));
+  combinedDateTime.setMinutes(parseInt(time.split(':')[1], 10));
+  return combinedDateTime;
 }
-
 export function buildSubtasks(taskForm : FormGroup): Task[] {
   const subtasks: Task[] = [];
 
-  if (taskForm.get('showSubtasksDiv')?.value) {
+  if (taskForm.get('showSubtasksDiv')?.value === true) {
     const subtasksFormArray = taskForm.get('subtasks') as FormArray;
     subtasksFormArray.controls.forEach((subtaskControl: AbstractControl) => {
       const subtask: Task = {
         id: -1,
         name: subtaskControl.get('name')?.value,
-        taskType: TaskType.Simple,
+        description: subtaskControl.get('description')?.value,
         completed: false,
         category: taskForm.get('category')?.value,
-        description: subtaskControl.get('description')?.value,
         subtasks: [],
         parentTask: undefined,
         fromDate: undefined,
@@ -74,17 +72,15 @@ export function buildSubtasks(taskForm : FormGroup): Task[] {
   templateUrl: './task-form.component.html',
   styleUrls: ['./task-form.component.css']
 })
-export class TaskFormComponent {
+export class TaskFormComponent implements OnInit{
   taskForm: FormGroup;
   categories: Category[] = [];
-  addButtonClicked = false;
 
   get subtasks(): FormArray {
     return this.taskForm.get('subtasks') as FormArray;
   }
 
-  constructor(private fb: FormBuilder, public categoryService: CategoryService,
-              private router: Router) {
+  constructor(private fb: FormBuilder, public categoryService: CategoryService) {
     this.taskForm = this.fb.group({
       name: ['', [Validators.required]],
       description: [''],
@@ -97,11 +93,6 @@ export class TaskFormComponent {
       showSubtasksDiv: [false],
       subtasks: this.fb.array([]),
       newSubtask: this.buildSubtaskForm()
-    });
-
-    this.categoryService.getCategories().subscribe(data => {
-      this.categories = data;
-      if (this.subtasks.length === 0) this.addNewSubtask();
     });
 
     this.taskForm.get('showDateDiv')?.valueChanges.subscribe(value => {
@@ -146,13 +137,12 @@ export class TaskFormComponent {
   submitForm() {
     if (this.taskForm.valid) {
       const task: Task = buildTask(this.taskForm);
-
-      this.categoryService.createTask(task);
+      const alterSubtasks: boolean = task.subtasks!.length > 0;
+      this.categoryService.createTask(task, alterSubtasks);
     }
   }
 
   addNewSubtask() {
-    this.addButtonClicked = true;
     this.subtasks.push(this.buildSubtaskForm());
   }
 
@@ -175,6 +165,17 @@ export class TaskFormComponent {
       }
       return null;
     };
+  }
+
+  ngOnInit(): void {
+    this.categoryService.categoriesSubject.subscribe(data => {
+      this.categories = data;
+
+      if (this.categories.length > 0) {
+        this.taskForm.get('category')?.setValue(this.categories[0]);
+      }
+    })
+
   }
 
 }

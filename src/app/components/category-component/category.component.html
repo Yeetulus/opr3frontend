@@ -1,4 +1,5 @@
-<button mat-button [style.background]="category.color" (click)="onClick()" class="category" matTooltip="{{ category.description }}">
+<button mat-button [style.background]="category.color" (click)="onClick()"
+        class="category" matTooltip="{{ category.description }}" matTooltipPosition="after">
     <mat-checkbox color="primary" [(ngModel)]="category.isVisible" (change)="onCheckboxChange()"></mat-checkbox>
     <span>{{ category.name }}</span>
 </button>

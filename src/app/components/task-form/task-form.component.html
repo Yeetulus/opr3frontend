@@ -44,8 +44,8 @@
     </ng-container>
   </ng-container>
   <br>
-  <mat-slide-toggle class="toggle-spacing" color="primary" formControlName="showSubtasksDiv">Subtasks</mat-slide-toggle>
-  <ng-container *ngIf="taskForm.get('showSubtasksDiv')?.value">
+  <mat-slide-toggle class="toggle-spacing" color="primary" formControlName="showSubtasksDiv" checked>Subtasks</mat-slide-toggle>
+  <ng-container *ngIf="taskForm.get('showSubtasksDiv')?.value" >
     <div formArrayName="subtasks">
       <div *ngFor="let subtask of subtasks.controls; let i = index" [formGroupName]="i">
         <mat-form-field class="subtask-field">

@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Category} from "../../components/category-component/category.component";
-import {HttpClient, HttpHeaders} from "@angular/common/http";
-import {BehaviorSubject, map, Observable, tap} from "rxjs";
+import {HttpClient, HttpHeaders, HttpParams} from "@angular/common/http";
+import {BehaviorSubject} from "rxjs";
 import {Task} from 'src/app/components/task-component/task.component';
 import {NotificationService, NotificationType} from "../notification-service/notification.service";
 import {Router} from "@angular/router";
@@ -11,27 +11,18 @@ import {Router} from "@angular/router";
 })
 export class CategoryService {
   private baseUrl = 'http://localhost:8080/api';
-  private categoriesSubject: BehaviorSubject<Category[]> = new BehaviorSubject<Category[]>([]);
-  private tasksSubject: BehaviorSubject<Task[]> = new BehaviorSubject<Task[]>([]);
+  categoriesSubject: BehaviorSubject<Category[]> = new BehaviorSubject<Category[]>([]);
+  tasksSubject: BehaviorSubject<Task[]> = new BehaviorSubject<Task[]>([]);
 
   constructor(private http: HttpClient, public notificationService:NotificationService, public router: Router) {
-    this.fetchCategories();
-  }
-
-  getCategories(): Observable<Category[]> {
-    return this.categoriesSubject.asObservable();
-  }
-  getDisplayedTasks(): Observable<Task[]> {
-
-    return this.tasksSubject.asObservable();
   }
 
   public updateDisplayedTasks(): void {
-    this.categoriesSubject.pipe(
-        map(categories => this.combineAndSortTasks(categories)),
-        tap(filteredTasks => this.tasksSubject.next(filteredTasks))
-    ).subscribe();
 
+    let categories = this.categoriesSubject.getValue();
+    let tasks = this.combineAndSortTasks(categories);
+
+    this.tasksSubject.next(tasks);
   }
 
   private combineAndSortTasks(categories: Category[]): Task[] {
@@ -66,30 +57,14 @@ export class CategoryService {
     }
   }
 
-  createCategory(category: Category): Observable<Category> {
-    const headers = this.getHeaders();
-    return this.http.post<Category>(`${this.baseUrl}/categories/create`, category, { headers })
-      .pipe(tap(createdCategory => this.updateCategories(createdCategory)));
-  }
-
-  private updateCategories(newCategory: Category): void {
-    const currentCategories = this.categoriesSubject.getValue();
-    const updatedCategories = [...currentCategories, newCategory];
-    this.categoriesSubject.next(updatedCategories);
-  }
-
-  private fetchCategories(): void {
+  public fetchCategories(): void {
     const headers = this.getHeaders();
 
-    this.http.get<Category[]>(`${this.baseUrl}/categories/get-all`, { headers })
-        .pipe(
-            tap(categories => {
-              this.setupCategories(categories);
-              this.categoriesSubject.next(categories);
-            }),
-            tap(() => this.updateDisplayedTasks())
-        )
-        .subscribe();
+    this.http.get<Category[]>(`${this.baseUrl}/categories/get-all`, { headers }).subscribe(data =>{
+      this.setupCategories(data);
+      this.categoriesSubject.next(data);
+      this.updateDisplayedTasks();
+    });
   }
 
   private getHeaders() {
@@ -98,6 +73,29 @@ export class CategoryService {
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
     });
+  }
+
+  createCategory(category: Category) {
+    const headers = this.getHeaders();
+    this.http.post<Category>(`${this.baseUrl}/categories/create`, category, {headers}).subscribe({
+      next: (data:Category) => {
+        console.log('Category created successfully: ' + category);
+        this.notificationService.showNotification("Category created", NotificationType.Success);
+        this.updateCategories(data);
+        this.router.navigate(['/main']);
+      },
+      error: (err) => {
+        console.log(err);
+        this.notificationService.showNotification("Category was not created", NotificationType.Error);
+      }
+    });
+  }
+
+  private updateCategories(newCategory: Category): void {
+    const currentCategories = this.categoriesSubject.getValue();
+    newCategory.tasks = [];
+    const updatedCategories = [...currentCategories, newCategory];
+    this.categoriesSubject.next(updatedCategories);
   }
 
   private setupCategories(categories: Category[]) {
@@ -112,60 +110,174 @@ export class CategoryService {
     });
   }
 
-  public updateTask(task: Task) {
-
-    const headers = this.getHeaders();
-    const endpoint = `${this.baseUrl}/tasks/edit`;
-    const body = this.convertTaskToTaskRequest(task);
-
-    this.http.put(endpoint, body, { headers }).subscribe(data =>
-      console.log(data));
-    this.updateDisplayedTasks();
-
-  }
-  private convertTaskToTaskRequest(task: Task): any {
-    return {
+  private convertTaskToTaskRequest(task: Task, alterSubtasks?:boolean, newCategory? : number): any {
+    let body:any = {
       name: task.name,
-      id: task.id? task.id : -1,
       description: task.description,
       categoryId: task.category.id,
       completed: task.completed,
       fromDate: task.fromDate,
       toDate: task.toDate,
-      subtasks: task.subtasks? task.subtasks.map(subtask => this.convertTaskToTaskRequest(subtask)) : undefined,
+      subtasks: task.subtasks ? task.subtasks.map(subtask => this.convertTaskToTaskRequest(subtask, false)) : undefined,
     };
+    if(task.id) body.id= task.id;
+    if(newCategory) body.newCategoryId = newCategory;
+    if(alterSubtasks) body.alterSubtasks = true;
+    return body;
   }
 
-  createTask(task: Task){
+  createTask(task: Task, alterSubtasks: boolean){
     const url = `${this.baseUrl}/tasks/create`;
     const headers = this.getHeaders();
-    const taskRequest = this.convertTaskToTaskRequest(task);
-    this.http.post<Task>(url, taskRequest, { headers }).subscribe(
-      (createdTask: Task) => {
+    const taskRequest = this.convertTaskToTaskRequest(task, alterSubtasks);
+    this.http.post<Task>(url, taskRequest, { headers }).subscribe({
+      next: (createdTask: Task) => {
         console.log(createdTask);
         this.notificationService.showNotification("Task created successfully", NotificationType.Success);
-        this.updateCategoriesWithNewTask(createdTask);
         this.router.navigate(["/main"]);
+        this.updateCategoriesWithNewTask(createdTask, task.category.id);
       },
-      error => {
+      error: error => {
         console.log(error);
         this.notificationService.showNotification("There was an issue with the creation of the task", NotificationType.Error);
       }
-    );
+    });
+  }
+
+  public updateTask(task: Task, alterSubtasks?:boolean, newCategoryId?: number) {
+
+    const headers = this.getHeaders();
+    const endpoint = `${this.baseUrl}/tasks/edit`;
+    const body = this.convertTaskToTaskRequest(task, alterSubtasks, newCategoryId);
+
+    this.http.put<Task>(endpoint, body, { headers }).subscribe({
+      next: (data) =>{
+        console.log(data);
+        this.notificationService.showNotification("Task updated", NotificationType.Success);
+        this.switchTaskCategory(data, body.categoryId, body.newCategoryId);
+        this.router.navigate(["/main"]);
+      },
+      error: (err) => {
+        this.notificationService.showNotification("Cannot update", NotificationType.Error);
+        console.log(err);
+      }
+    });
+  }
+
+  public deleteTask(task: Task) {
+    const endpoint = `${this.baseUrl}/tasks/delete`;
+    const headers = this.getHeaders();
+    const params = new HttpParams()
+      .set('categoryId', task.category.id)
+      .set('taskId', task.id);
+    this.http.delete(endpoint, { headers, params }).subscribe({
+      next: (result) => {
+        console.log(result);
+        this.removeTaskFromCategory(task.id, task.category.id);
+        this.notificationService.showNotification("Task deleted", NotificationType.Success);
+        this.router.navigate(["/main"]);
+      },
+      error: (err) =>{
+        console.log(err);
+        this.notificationService.showNotification("Cannot delete", NotificationType.Error);
+      }
+    });
+
+  }
+
+  deleteCategory(selectedCategoryId: number) {
+    const categories = this.categoriesSubject.getValue();
+    const toDelete: Category | undefined = categories.find(c => c.id === selectedCategoryId);
+
+    if (toDelete) {
+      const endpoint = `${this.baseUrl}/categories/delete`;
+      const headers = this.getHeaders();
+      const params = new HttpParams().set('id', toDelete.id.toString());
+
+      this.http.delete<boolean>(endpoint, { headers, params }).subscribe({
+        next: (result) => {
+          console.log(result);
+          this.notificationService.showNotification("Category deleted", NotificationType.Success);
+
+          const updatedCategories = categories.filter(c => c.id !== selectedCategoryId);
+          this.categoriesSubject.next(updatedCategories);
+
+          this.updateDisplayedTasks();
+        },
+        error: (err) => {
+          console.log(err);
+          this.notificationService.showNotification("Cannot delete", NotificationType.Error);
+        }
+      });
+    }
   }
 
 
-  private updateCategoriesWithNewTask(createdTask: Task): void {
-    const currentCategories = this.categoriesSubject.getValue();
-    const updatedCategories = currentCategories.map(category => {
-      if (category.id === createdTask.category?.id) {
-        category.tasks = category.tasks || [];
-        category.tasks.push(createdTask);
-      }
-      return category;
-    });
+  private updateCategoriesWithNewTask(createdTask: Task, categoryId: number): void {
 
-    this.categoriesSubject.next(updatedCategories);
+    let categories = this.categoriesSubject.getValue();
+    for (let i = 0; i < categories.length; i++) {
+      if(categories[i].id === categoryId) {
+        createdTask.category = categories[i];
+        createdTask.subtasks?.forEach(s => s.category = categories[i])
+        categories[i].tasks?.push(createdTask);
+        console.log("Added task into its category");
+        break;
+      }
+    }
+    this.categoriesSubject.next(categories);
+    this.updateDisplayedTasks();
+  }
+
+  private switchTaskCategory(task: Task, oldCategoryId: number, newCategoryId: number) {
+    const categories = this.categoriesSubject.getValue();
+
+    if (oldCategoryId !== newCategoryId) {
+      const oldCategory = categories.find(category => category.id === oldCategoryId);
+      const newCategory = categories.find(category => category.id === newCategoryId);
+
+      if (oldCategory && newCategory) {
+        const taskIndex = oldCategory.tasks?.findIndex(t => t.id === task.id);
+
+        if (taskIndex !== -1 && oldCategory.tasks) {
+          const removedTask = oldCategory.tasks.splice(taskIndex!, 1)[0];
+          removedTask.category = newCategory;
+          newCategory.tasks?.push(removedTask);
+          console.log(categories);
+        }
+      }
+    } else {
+      const category = categories.find(category => category.id === oldCategoryId);
+
+      if (category) {
+        const taskIndex = category.tasks?.findIndex(t => t.id === task.id);
+
+        if (taskIndex !== -1 && category.tasks) {
+          task.category = category;
+          category.tasks.splice(taskIndex!, 1, task);
+        }
+      }
+    }
+
+    this.categoriesSubject.next(categories);
+    this.updateDisplayedTasks();
+  }
+
+  private removeTaskFromCategory(taskId: number, categoryId: number) {
+    let categories = this.categoriesSubject.getValue();
+
+    for (let i = 0; i < categories.length; i++) {
+      if(categories[i].id === categoryId && categories[i].tasks! !== undefined)
+      {
+        for (let j = 0; j < categories[i].tasks!.length; j++) {
+          if(categories[i].tasks?.[j].id === taskId){
+            categories[i].tasks?.splice(j, 1);
+          }
+        }
+      }
+    }
+
+    this.categoriesSubject.next(categories);
     this.updateDisplayedTasks();
   }
 
@@ -174,7 +286,5 @@ export class CategoryService {
     this.tasksSubject.next([]);
   }
 
-  deleteTask(task: Task) {
 
-  }
 }

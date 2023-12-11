@@ -1,33 +1,41 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, Input} from '@angular/core';
 import {Category} from "../category-component/category.component";
 import {CategoryService} from "../../services/category-service/category.service";
 import {Router} from "@angular/router";
 
-export enum TaskType {
-  Simple = 'SIMPLE',
-  Complex = 'COMPLEX',
-}
 
-
-export function stringify(obj:any) {
-  let cache:any[] = [];
-  let str = JSON.stringify(obj, function(key, value) {
+export function stringify(obj: any) {
+  let cache: any[] = [];
+  let str = JSON.stringify(obj, function (key, value) {
     if (typeof value === "object" && value !== null) {
       if (cache.indexOf(value) !== -1) {
         return;
       }
       cache.push(value);
+
+      if (key === 'subtasks') {
+        return value.map((subtask: any) => ({
+          id: subtask.id,
+          name: subtask.name,
+          description: subtask.description,
+          fromDate: subtask.fromDate,
+          toDate: subtask.toDate,
+          completed: subtask.completed,
+          subtasks: [],
+        }));
+      }
     }
-    return value;
+    return key === 'category' ? { id: value.id, name: value.name } : value;
   });
+
   cache = [];
   return str;
 }
 
+
 export class Task{
   id: number;
   name: string;
-  taskType: TaskType;
   completed: boolean;
   category: Category;
   description?: string | undefined;
@@ -38,7 +46,6 @@ export class Task{
   constructor(
     id: number,
     name: string,
-    taskType: TaskType,
     completed: boolean,
     category: Category,
     subtasks?: Task[],
@@ -49,7 +56,6 @@ export class Task{
   ) {
     this.id = id;
     this.name = name;
-    this.taskType = taskType;
     this.completed = completed;
     this.category = category;
     this.description = description;
@@ -67,8 +73,9 @@ export class Task{
       return value;
     };
 
-    return Object.assign(new Task(0, '', TaskType.Simple, false, new Category(0, '', '', '', [])), JSON.parse(json, reviver));
+    return Object.assign(new Task(0, '', false, new Category(0, '', '', '', [])), JSON.parse(json, reviver));
   }
+
 }
 
 @Component({

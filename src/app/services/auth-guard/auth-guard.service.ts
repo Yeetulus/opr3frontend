@@ -1,19 +1,28 @@
 import { Injectable } from '@angular/core';
-import {ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot} from "@angular/router";
+import {Router, UrlTree} from "@angular/router";
 import {AuthService} from "../auth-service/auth.service";
 import {catchError, map, Observable, of} from "rxjs";
+import {CategoryService} from "../category-service/category.service";
 
 @Injectable({
   providedIn: 'root',
 })
-export class AuthGuardService implements CanActivate {
-  constructor(private authService: AuthService, private router: Router) {}
+export class AuthGuardService {
+  constructor(private authService: AuthService,
+              private router: Router,
+              private categoryService: CategoryService) {}
 
-  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
+  canActivate():
+    | Observable<boolean | UrlTree>
+    | Promise<boolean | UrlTree>
+    | boolean
+    | UrlTree {
+
     return this.authService.isTokenValid().pipe(
       map((isValid) => {
         if (isValid) {
           console.log('Token is valid');
+          this.categoryService.fetchCategories();
           return true;
         } else {
           console.log('Invalid token, rerouting to login screen');

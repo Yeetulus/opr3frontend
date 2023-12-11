@@ -1,6 +1,6 @@
 <ng-container>
   <button mat-button class="task-button" (click)="onTaskClick(task)" [style.background-color]="hoveringDelete? 'red' : (task.completed ? 'green' : task.category.color)"
-          matTooltip="{{ task.description }}">
+          matTooltip="{{ task.description }}" matTooltipPosition="before">
     <span class="content">
       <span>{{ task.name }}</span>
     <span class="spacer"></span>
@@ -20,7 +20,7 @@
   </button>
   <ng-container *ngIf="task.subtasks && task.subtasks.length > 0">
     <ng-container *ngFor="let subtask of task.subtasks">
-      <button mat-button class="subtask-button" (click)="onTaskClick(subtask)" [style.background-color]="hoveringDelete? 'red' : (subtask.completed ? 'green' : task.category.color)" matTooltip="{{ subtask.description }}">
+      <button mat-button class="subtask-button" (click)="onTaskClick(subtask)" [style.background-color]="hoveringDelete? 'red' : (subtask.completed ? 'green' : task.category.color)" matTooltip="{{ subtask.description }}" matTooltipPosition="before">
         <span>{{ subtask.name }}</span>
         <span class="spacer"></span>
         <span>

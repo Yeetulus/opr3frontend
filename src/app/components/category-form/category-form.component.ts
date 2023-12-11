@@ -12,7 +12,7 @@ export class CategoryFormComponent {
   categoryForm: FormGroup;
   color: string = '#ffffff';
 
-  constructor(private fb: FormBuilder, private categoryService: CategoryService, private router: Router) {
+  constructor(private fb: FormBuilder, private categoryService: CategoryService) {
     this.categoryForm = this.fb.group({
       name: ['', [Validators.required]],
       description: [''],
@@ -24,13 +24,13 @@ export class CategoryFormComponent {
     return (control: AbstractControl): { [key: string]: any } | null => {
       const colorRegex = /^#([0-9A-Fa-f]{6})$/;
       if (!colorRegex.test(control.value)) {
-        return { invalidColor: true };
+        return {invalidColor: true};
       }
 
       const hexColor = control.value;
       const rgbColor = this.hexToRgb(hexColor);
       const hslColor = this.rgbToHsl(rgbColor.r, rgbColor.g, rgbColor.b);
-      return hslColor.l >= 0.5 ? null : { lightnessBelowThreshold: true };
+      return hslColor.l >= 0.5 ? null : {lightnessBelowThreshold: true};
     };
   }
 
@@ -41,7 +41,7 @@ export class CategoryFormComponent {
     const g = (bigint >> 8) & 255;
     const b = bigint & 255;
 
-    return { r, g, b };
+    return {r, g, b};
   }
 
   rgbToHsl(r: number, g: number, b: number): { h: number, s: number, l: number } {
@@ -54,21 +54,13 @@ export class CategoryFormComponent {
 
     const l = (max + min) / 2;
 
-    return { h: 0, s: 0, l };
+    return {h: 0, s: 0, l};
   }
 
   submitForm() {
     if (this.categoryForm.valid) {
       const categoryRequest = this.categoryForm.value;
-      this.categoryService.createCategory(categoryRequest).subscribe(
-        (response) => {
-          console.log('Category created successfully:', response);
-          this.router.navigate(['/main']);
-        },
-        (error) => {
-          console.error('Error creating category:', error);
-        }
-      );
+      this.categoryService.createCategory(categoryRequest);
     }
   }
 }

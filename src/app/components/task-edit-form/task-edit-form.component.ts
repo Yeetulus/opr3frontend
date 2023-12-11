@@ -1,8 +1,8 @@
-import { Component } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {AbstractControl, FormArray, FormBuilder, FormGroup, ValidatorFn, Validators} from "@angular/forms";
 import {Category} from "../category-component/category.component";
 import {CategoryService} from "../../services/category-service/category.service";
-import {ActivatedRoute, Router} from "@angular/router";
+import {ActivatedRoute} from "@angular/router";
 import {Task} from "../task-component/task.component";
 import {buildTask} from "../task-form/task-form.component";
 
@@ -11,17 +11,17 @@ import {buildTask} from "../task-form/task-form.component";
   templateUrl: './task-edit-form.component.html',
   styleUrls: ['./task-edit-form.component.css']
 })
-export class TaskEditFormComponent {
+export class TaskEditFormComponent implements OnInit{
   taskForm: FormGroup;
   categories: Category[] = [];
   addButtonClicked = false;
+  task?: Task;
 
   get subtasks(): FormArray {
     return this.taskForm.get('subtasks') as FormArray;
   }
 
-  constructor(private route: ActivatedRoute, private fb: FormBuilder, public categoryService: CategoryService,
-              private router: Router) {
+  constructor(private route: ActivatedRoute, private fb: FormBuilder, public categoryService: CategoryService) {
     this.taskForm = this.fb.group({
       name: ['', [Validators.required]],
       description: [''],
@@ -34,11 +34,6 @@ export class TaskEditFormComponent {
       showSubtasksDiv: [false],
       subtasks: this.fb.array([]),
       newSubtask: this.buildSubtaskForm()
-    });
-
-    this.categoryService.getCategories().subscribe(data => {
-      this.categories = data;
-      if (this.subtasks.length === 0) this.addNewSubtask();
     });
 
     this.taskForm.get('showDateDiv')?.valueChanges.subscribe(value => {
@@ -77,41 +72,49 @@ export class TaskEditFormComponent {
     });
 
     this.taskForm.get('selectedDate')?.setValidators(this.dateValidator());
-
-    this.route.params.subscribe(params =>{
-
-    })
   }
 
   ngOnInit(): void {
     this.route.params.subscribe(params => {
-      const task: Task = Task.fromJSON(params['task']);
-      console.log(task);
-      this.updateFormWithTask(task);
+      this.task = Task.fromJSON(params['task']);
+      this.updateFormWithTask(this.task);
     });
 
-    this.categoryService.getCategories().subscribe(data => {
+    this.categoryService.categoriesSubject.subscribe(data =>{
       this.categories = data;
       if (this.subtasks.length === 0) this.addNewSubtask();
-    });
+      this.setInitialCategory();
+    })
+  }
 
+  private setInitialCategory() {
+    const formReference = this.taskForm.get("category")?.value;
+    if (formReference !== undefined) {
+      const selected = this.categories.find(element => element.id === formReference.id);
+      this.taskForm.get("category")?.setValue(selected);
+    }
   }
 
   updateFormWithTask(task: Task) {
-    let fromDateValue = '';
+    let fromDateValue:Date = new Date();
+    let fromTime = '';
     let toTime = '';
 
     if (task.fromDate) {
-      const day = ('0' + task.fromDate.getDate()).slice(-2);
-      const month = ('0' + (task.fromDate.getMonth() + 1)).slice(-2);
       const year = task.fromDate.getFullYear();
-      fromDateValue = `${day}.${month}.${year}`;
+      const month = task.fromDate.getMonth();
+      const day = task.fromDate.getDate();
+      fromDateValue = new Date(year, month, day);
+
+      const fromHours = ('0' + task.fromDate.getHours()).slice(-2);
+      const fromMinutes = ('0' + task.fromDate.getMinutes()).slice(-2);
+      fromTime = `${fromHours}:${fromMinutes}`;
     }
 
-    if (task.toDate) {
-      const hours = ('0' + task.toDate.getHours()).slice(-2);
-      const minutes = ('0' + task.toDate.getMinutes()).slice(-2);
-      toTime = `${hours}:${minutes}`;
+    if (task.toDate && task.fromDate) {
+      const toHours = ('0' + task.toDate.getHours()).slice(-2);
+      const toMinutes = ('0' + task.toDate.getMinutes()).slice(-2);
+      toTime = `${toHours}:${toMinutes}`;
     }
 
     this.taskForm.patchValue({
@@ -119,8 +122,9 @@ export class TaskEditFormComponent {
       description: task.description,
       category: task.category,
       showDateDiv: !!task.fromDate,
-      selectedDate: task.fromDate,
+      selectedDate: fromDateValue,
       showTimesDiv: !!task.toDate,
+      startTime: fromTime,
       endTime: toTime,
       showSubtasksDiv: (!!task.subtasks && task.subtasks.length > 0)
     });
@@ -145,10 +149,22 @@ export class TaskEditFormComponent {
   }
 
   submitForm() {
-    if (this.taskForm.valid) {
+    if (this.taskForm.valid && this.task) {
       const task: Task = buildTask(this.taskForm);
+      console.log(task);
+      const alterSubtasks: boolean = this.task.subtasks?.length !== task.subtasks?.length;
 
-      this.categoryService.createTask(task);
+      this.task.name = task.name;
+      this.task.description = task.description;
+      this.task.fromDate = task.fromDate;
+      this.task.toDate = task.toDate;
+      this.task.subtasks = [];
+      this.task.completed = task.completed;
+      task.subtasks?.forEach(subtask => {
+        this.task?.subtasks?.push(subtask);
+      })
+
+      this.categoryService.updateTask(this.task, alterSubtasks, task.category.id);
     }
   }
 
